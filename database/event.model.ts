@@ -174,6 +174,26 @@ EventSchema.pre("save", function () {
   }
 });
 
+const rejectEventWriteWithoutSave = (): never => {
+  throw new Error(
+    "Event writes must use save() or create() so schema invariants run.",
+  );
+};
+
+// These APIs bypass document save hooks, so reject them instead of saving unsafe data.
+EventSchema.pre("insertMany", rejectEventWriteWithoutSave);
+EventSchema.pre("bulkWrite", rejectEventWriteWithoutSave);
+EventSchema.pre(
+  [
+    "updateOne",
+    "updateMany",
+    "findOneAndUpdate",
+    "replaceOne",
+    "findOneAndReplace",
+  ],
+  rejectEventWriteWithoutSave,
+);
+
 const Event: Model<EventDocument> =
   (mongoose.models.Event as Model<EventDocument> | undefined) ??
   mongoose.model<EventDocument>("Event", EventSchema);

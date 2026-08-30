@@ -47,6 +47,26 @@ BookingSchema.pre("save", async function () {
   }
 });
 
+const rejectBookingWriteWithoutSave = (): never => {
+  throw new Error(
+    "Booking writes must use save() or create() so schema invariants run.",
+  );
+};
+
+// These APIs bypass document save hooks, so reject them instead of saving unsafe data.
+BookingSchema.pre("insertMany", rejectBookingWriteWithoutSave);
+BookingSchema.pre("bulkWrite", rejectBookingWriteWithoutSave);
+BookingSchema.pre(
+  [
+    "updateOne",
+    "updateMany",
+    "findOneAndUpdate",
+    "replaceOne",
+    "findOneAndReplace",
+  ],
+  rejectBookingWriteWithoutSave,
+);
+
 const Booking: Model<BookingDocument> =
   (mongoose.models.Booking as Model<BookingDocument> | undefined) ??
   mongoose.model<BookingDocument>("Booking", BookingSchema);
