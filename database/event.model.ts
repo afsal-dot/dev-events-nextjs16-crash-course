@@ -34,13 +34,27 @@ const createSlug = (title: string): string =>
     .replace(/^-+|-+$/g, "");
 
 const normalizeDate = (value: string): string => {
-  const date = new Date(value.trim());
+  const normalized = value.trim();
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normalized);
 
-  if (Number.isNaN(date.getTime())) {
-    throw new Error("Event date must be a valid date.");
+  if (!match) {
+    throw new Error("Event date must use YYYY-MM-DD format.");
   }
 
-  return date.toISOString().slice(0, 10);
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    throw new Error("Event date must be a valid calendar date.");
+  }
+
+  return normalized;
 };
 
 const normalizeTime = (value: string): string => {
